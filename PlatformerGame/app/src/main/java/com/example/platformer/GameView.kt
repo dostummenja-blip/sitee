@@ -45,7 +45,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     private var distanceSinceLastObstacle = 0f
     private var nextObstacleGap = 500f
 
-    // --- Paint объекты (переиспользуем, не создаём в draw) ---
+    // --- Paint объекты ---
     private val bgPaint = Paint().apply { color = Color.parseColor("#87CEEB") }
     private val groundPaint = Paint().apply { color = Color.parseColor("#4CAF50") }
     private val playerPaint = Paint().apply { color = Color.parseColor("#FF5722") }
@@ -103,7 +103,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         try {
             thread?.join()
         } catch (e: InterruptedException) {
-            // игнорируем, поток и так завершится
+            // игнорируем
         }
     }
 
@@ -121,7 +121,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             val now = System.nanoTime()
             var dt = (now - lastFrameTime) / 1_000_000_000f
             lastFrameTime = now
-            dt = min(dt, 0.033f) // защита от рывков при паузах
+            dt = min(dt, 0.033f)
 
             if (started && !gameOver) {
                 update(dt)
@@ -136,14 +136,13 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
                 }
             }
 
-            // Ограничиваем частоту кадров примерно до 60 FPS
             val frameTimeMs = (System.nanoTime() - now) / 1_000_000
             val targetFrameTimeMs = 16L
             if (frameTimeMs < targetFrameTimeMs) {
                 try {
                     Thread.sleep(targetFrameTimeMs - frameTimeMs)
                 } catch (e: InterruptedException) {
-                    // поток завершается, выходим из цикла на следующей проверке running
+                    // поток завершается
                 }
             }
         }
@@ -166,10 +165,8 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
 
     private fun update(dt: Float) {
         elapsedTime += dt
-        // Постепенно увеличиваем скорость - сложность растёт со временем
         groundSpeed = groundSpeedStart + elapsedTime * 12f
 
-        // Физика игрока
         playerVelY += gravity * dt
         playerY += playerVelY * dt
 
@@ -181,7 +178,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             onGround = false
         }
 
-        // Спавн препятствий
         distanceSinceLastObstacle += groundSpeed * dt
         if (distanceSinceLastObstacle >= nextObstacleGap) {
             spawnObstacle()
@@ -189,7 +185,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
             nextObstacleGap = Random.nextInt(380, 620).toFloat()
         }
 
-        // Двигаем препятствия и проверяем столкновения
         val playerRect = RectF(playerX, playerY, playerX + playerSize, playerY + playerSize)
         val iterator = obstacles.iterator()
         while (iterator.hasNext()) {
@@ -209,8 +204,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
     }
 
     private fun spawnObstacle() {
-        // type 0 = препятствие на земле (нужно прыгнуть)
-        // type 1 = платформа в воздухе (нужно проскочить под ней или запрыгнуть точно)
         val type = if (Random.nextFloat() < 0.75f) 0 else 1
         if (type == 0) {
             val h = Random.nextInt(70, 140).toFloat()
@@ -222,7 +215,9 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         }
     }
 
-    private fun draw(canvas: Canvas) {
+    public override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+
         canvas.drawRect(0f, 0f, screenW.toFloat(), screenH.toFloat(), bgPaint)
         canvas.drawRect(0f, groundY, screenW.toFloat(), screenH.toFloat(), groundPaint)
 
@@ -245,7 +240,6 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback,
         }
     }
 
-    // --- Управление тапом ---
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN) {
             if (!started) {
