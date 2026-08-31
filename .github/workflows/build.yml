@@ -23,5 +23,4 @@ jobs:
     - name: Build with Gradle
       run: |
         cd PlatformerGame
-        chmod +x gradlew || true
-        ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+        gradle assembleDebug
