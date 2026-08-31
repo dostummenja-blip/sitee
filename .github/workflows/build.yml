@@ -29,9 +29,9 @@ jobs:
       run: |
         cd PlatformerGame
         if [ -f "gradlew" ]; then
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
         else
-          gradle assembleDebug
+          gradle assembleDebug --stacktrace
         fi
 
     - name: Upload APK
